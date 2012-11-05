@@ -173,13 +173,13 @@ void SBox::calculate_boolean_f()
         }
     }
     // Calculate linear combinations of coordinative (full) boolean functions
-    for (int i = 1; i < this->output_combinations; ++i)
+    for (int i = 0; i < this->output_combinations - 1; ++i)
     {
-        memset(boolean_f[i - 1], 0, sizeof(boolean_f[0]) * this->input_combinations);
-        for (int j = 0, f_index = i; f_index; ++j, f_index >>= 1)
+        memset(boolean_f[i], 0, sizeof(boolean_f[0][0]) * this->input_combinations);
+        for (int j = 0, f_index = i + 1; f_index; ++j, f_index >>= 1)
             if (f_index & 1)
                 for (int k = 0; k < this->input_combinations; ++k)
-                    boolean_f[i - 1][k] ^= full_boolean_f[j][k];
+                    boolean_f[i][k] ^= full_boolean_f[j][k];
     }
     for (int i = 0; i < this->output_length; ++i)
         delete[] full_boolean_f[i];
