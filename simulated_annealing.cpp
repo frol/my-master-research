@@ -22,15 +22,16 @@ class SimulatedAnnealing
     int input_length, output_length;
     int X, R;
     int* precalc_powers;
+    bool is_already_pre_runned;
 
-    void pre_run(SBox &sbox);
-    long double get_cost(SBox &sbox);
     void generate_neighbor(SBox &sbox);
     void restore_generated_neighbor(SBox &sbox);
 
 public:
     SimulatedAnnealing(int X, int R);
     ~SimulatedAnnealing();
+    long double get_cost(SBox &sbox);
+    void pre_run(SBox &sbox);
     bool run(SBox &sbox, int MIL, int MaxIL, int MUL, double alpha);
 };
 
@@ -40,6 +41,7 @@ SimulatedAnnealing::SimulatedAnnealing(int X, int R)
     pos_index = 0;
     this->X = X;
     this->R = R;
+    this->is_already_pre_runned = false;
 }
 
 SimulatedAnnealing::~SimulatedAnnealing()
@@ -50,6 +52,9 @@ SimulatedAnnealing::~SimulatedAnnealing()
 
 void SimulatedAnnealing::pre_run(SBox &sbox)
 {
+    if (this->is_already_pre_runned)
+        return;
+    this->is_already_pre_runned = true;
     this->ar_pos1 = new int[sbox.input_combinations];
     this->ar_pos2 = new int[sbox.input_combinations];
     for (int i=0; i < sbox.input_combinations; ++i)
@@ -194,11 +199,19 @@ int main()
     srand(time(NULL));
     SBox sbox(CIPHER_N, CIPHER_M, CIPHER_INPUT_LENGTH, CIPHER_OUTPUT_LENGTH);
     SimulatedAnnealing simulated_annealing(8, 3);
+    /*
     // Random
     //int F[] = {4, 11, 3, 15, 8, 3, 1, 4, 10, 2, 1, 7, 3, 2, 15, 8, 11, 2, 0, 8, 5, 5, 9, 12, 14, 10, 11, 14, 15, 10, 14, 6, 13, 5, 3, 6, 7, 5, 9, 6, 8, 7, 4, 2, 1, 10, 15, 0, 14, 9, 0, 12, 4, 11, 0, 12, 1, 7, 12, 9, 13, 13, 6, 13};
     // DES S1
-    //int F[] = {15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10, 3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5, 0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15, 13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9};
-    //sbox.set(F);
+    int F[] = {15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10, 3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5, 0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15, 13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9};
+    sbox.set(F);
+    sbox.print();
+    sbox.print_boolean_f();
+    std::cout << "AC = " << sbox.get_AC() << '\n';
+    std::cout << "NL = " << sbox.get_NL() << '\n';
+    simulated_annealing.pre_run(sbox);
+    std::cout << "cost = " << simulated_annealing.get_cost(sbox) << '\n';
+    */
     while (true)
     {
         sbox.generate();
