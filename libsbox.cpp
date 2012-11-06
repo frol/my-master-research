@@ -120,6 +120,7 @@ int SBox::get_NL()
             int sum = 0;
             for (int x = 0; x < this->input_combinations; ++x)
             {
+                /* // There is builtin gcc function for count bits - __builtin_popcount
                 int wx = w & x;
                 int wx_sum = 0;
                 while(wx)
@@ -127,12 +128,13 @@ int SBox::get_NL()
                     wx_sum ^= wx & 0x1;
                     wx >>= 1;
                 }
-                sum += (boolean_f[i][x] ^ wx_sum) ? -1 : 1;
+                */
+                sum += (boolean_f[i][x] ^ __builtin_popcount(w & x) & 0x1) ? -1 : 1;
             }
             if (sum > max)
                 max = sum;
         }
-    return max;
+    return (this->input_combinations - max) >> 1;
 }
 
 int SBox::get_AC()
@@ -160,6 +162,7 @@ void SBox::swap(int pos1, int pos2)
 void SBox::calculate_boolean_f()
 {
     // TODO: Optimize this to store 32 bits instead on 1 bit in one array element.
+    // There is a boolean_optimizations branch!
     int** full_boolean_f = new int*[this->output_length];
     for (int i = 0; i < this->output_length; ++i)
     {
