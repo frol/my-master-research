@@ -113,14 +113,14 @@ void SBox::print_boolean_f()
 
 int SBox::get_NL()
 {
-    int max = 0;
+    int WHT_max = 0;
     for (int i = 0; i < this->output_combinations - 1; ++i)
         for (int w = 0; w < this->input_combinations; ++w)
         {
             int sum = 0;
             for (int x = 0; x < this->input_combinations; ++x)
             {
-                /* // There is builtin gcc function for count bits - __builtin_popcount
+                /* // There is the built-in gcc function for count bits - __builtin_popcount
                 int wx = w & x;
                 int wx_sum = 0;
                 while(wx)
@@ -131,10 +131,10 @@ int SBox::get_NL()
                 */
                 sum += (boolean_f[i][x] ^ __builtin_popcount(w & x) & 0x1) ? -1 : 1;
             }
-            if (sum > max)
-                max = sum;
+            if (sum > WHT_max)
+                WHT_max = sum;
         }
-    return (this->input_combinations - max) >> 1;
+    return (this->input_combinations - WHT_max) >> 1;
 }
 
 int SBox::get_AC()
