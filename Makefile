@@ -8,7 +8,7 @@ $(target) :
 
 optimal :
 	@mkdir -p $(BUILD_DIR)
-	$(CPP) -O3 -march=i686 -fforce-addr -funroll-loops -frerun-cse-after-loop -frerun-loop-opt \
+	$(CPP) -O3 -march=`uname -p | sed "s/_/-/"` -fforce-addr -funroll-loops -frerun-cse-after-loop -frerun-loop-opt \
 	$(target).cpp libsbox.cpp des_criteria.cpp -o $(BUILD_DIR)/$(target)
 
 clean :
