@@ -200,7 +200,7 @@ int main()
     SBox sbox(CIPHER_N, CIPHER_M, CIPHER_INPUT_LENGTH, CIPHER_OUTPUT_LENGTH);
     SimulatedAnnealing simulated_annealing(8, 3);
     
-    //*
+    /*
     // Random
     //int F[] = {4, 11, 3, 15, 8, 3, 1, 4, 10, 2, 1, 7, 3, 2, 15, 8, 11, 2, 0, 8, 5, 5, 9, 12, 14, 10, 11, 14, 15, 10, 14, 6, 13, 5, 3, 6, 7, 5, 9, 6, 8, 7, 4, 2, 1, 10, 15, 0, 14, 9, 0, 12, 4, 11, 0, 12, 1, 7, 12, 9, 13, 13, 6, 13};
     // DES S1
@@ -212,8 +212,9 @@ int main()
     std::cout << "NL = " << sbox.get_NL() << '\n';
     simulated_annealing.pre_run(sbox);
     std::cout << "cost = " << simulated_annealing.get_cost(sbox) << '\n';
+    std::cout << "Test DES: " << (testDES(sbox.F) ? "Passed" : "Failed") << '\n';
     //*/
-    /*
+    //*
     while (true)
     {
         sbox.generate();

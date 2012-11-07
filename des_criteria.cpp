@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 const int S_LENGTH = 64;
+/*
 int S[S_LENGTH] = {
 	// DES S1. Passed: S-2, S-3, S-4, S-5, S-6
     //*
@@ -33,18 +34,17 @@ int S[S_LENGTH] = {
 	0,3,5,8,6,0xc,0xb,7,9,0xe,0xa,0xd,0xf,2,1,4,
 	0,3,5,8,6,0xc,0xb,7,0xa,4,9,0xe,0xf,1,2,0xd,
     // */
-};
+//};
 
-inline int S_index(int index)
-{
-    return (((index & 0x20) >> 4) | (index & 1)) * 16 + ((index >> 1) & 0xf);
-}
+//#define S_index(index) (((((index) & 0x20) >> 4) | ((index) & 1)) * 16 + (((index) >> 1) & 0xf))
+#define S_index(index) (index)
 
 bool s2(int *S)
 {
     /*
     Changing one bit of input of S-box results in changing at least two output bits.
     */
+    printf("s2 ");
     int output_delta, bits_count;
     for (int input = 0; input < S_LENGTH; ++input)
     {
@@ -71,7 +71,7 @@ bool s3(int *S)
     The S-boxes were chosen to minimize the difference between the number of
     1's and 0's when any single bit is held constant.
     */
-    printf("s3!!!\n");
+    printf("s3 ");
     int mask, one_bits_count, output;
     for (int bit = 1; bit < S_LENGTH; bit <<= 1)
     {
@@ -105,7 +105,7 @@ bool s4(int *S)
     /*
     S(x) and S(x ^ 001100) differ at least two bits.
     */
-    printf("s4!!!\n");
+    printf("s4 ");
     int output_delta, bits_count;
     for (int input = 0; input < S_LENGTH; ++input)
     {
@@ -128,7 +128,7 @@ bool s5(int *S)
     /*
     S(x) != S(x ^ 11ef00) for any e and f
     */
-    printf("s5!!!\n");
+    printf("s5 ");
     for (int x = 0; x < S_LENGTH; ++x)
     {
         for (int ef = 0; ef < 4; ++ef)
@@ -145,7 +145,7 @@ bool s6(int *S)
     /*
     S(x) != S(x ^ 0abcd0) for any a, b, c, d and abcd != 0000
     */
-    printf("s6!!!\n");
+    printf("s6 ");
     for (int x = 0; x < S_LENGTH; ++x)
     {
         for (int abcd = 1; abcd < 16; ++abcd)
