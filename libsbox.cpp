@@ -131,6 +131,8 @@ int SBox::get_NL()
                 */
                 sum += (boolean_f[i][x] ^ __builtin_popcount(w & x) & 0x1) ? -1 : 1;
             }
+            if (sum < 0)
+                sum = -sum;
             if (sum > WHT_max)
                 WHT_max = sum;
         }
@@ -146,6 +148,8 @@ int SBox::get_AC()
             int sum = 0;
             for (int x = 0; x < this->input_combinations; ++x)
                 sum += (boolean_f[i][x] ^ boolean_f[i][x ^ delta]) ? -1 : 1;
+            if (sum < 0)
+                sum = -sum;
             if (sum > max)
                 max = sum;
         }
@@ -167,18 +171,16 @@ void SBox::calculate_boolean_f()
     for (int i = 0; i < this->output_length; ++i)
     {
         full_boolean_f[i] = new int[this->length];
+        memset(full_boolean_f[i], 0, this->byte_length);
         for (int j = 0; j < this->length; ++j)
         {
-            full_boolean_f[i][j] = 0;
-            for (int k = 0; k <= j; ++k)
-                if ((j & k) == k)
-                    full_boolean_f[i][j] ^= (F[k] >> i) & 0x1;
+            full_boolean_f[i][j] ^= (F[j] >> i) & 0x1;
         }
     }
     // Calculate linear combinations of coordinative (full) boolean functions
     for (int i = 0; i < this->output_combinations - 1; ++i)
     {
-        memset(boolean_f[i], 0, sizeof(boolean_f[0][0]) * this->input_combinations);
+        memset(boolean_f[i], 0, this->byte_length);
         for (int j = 0, f_index = i + 1; f_index; ++j, f_index >>= 1)
             if (f_index & 1)
                 for (int k = 0; k < this->input_combinations; ++k)
