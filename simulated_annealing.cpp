@@ -7,7 +7,8 @@
 #define CIPHER_N 16
 #define CIPHER_M 4
 #define CIPHER_INPUT_LENGTH 6
-#define CIPHER_OUTPUT_LENGTH 4
+//#define CIPHER_OUTPUT_LENGTH 4
+#define CIPHER_OUTPUT_LENGTH 2
 
 #define WISHED_NL 20
 #define WISHED_AC 32
@@ -22,7 +23,7 @@ class SimulatedAnnealing
     int input_length, output_length;
     int X, R;
     int* precalc_powers;
-    bool is_already_pre_runned;
+    bool is_already_initialized;
 
     void generate_neighbor(SBox &sbox);
     void restore_generated_neighbor(SBox &sbox);
@@ -31,7 +32,7 @@ public:
     SimulatedAnnealing(int X, int R);
     ~SimulatedAnnealing();
     long double get_cost(SBox &sbox);
-    void pre_run(SBox &sbox);
+    void init(SBox &sbox);
     bool run(SBox &sbox, int MIL, int MaxIL, int MUL, double alpha);
 };
 
@@ -41,20 +42,35 @@ SimulatedAnnealing::SimulatedAnnealing(int X, int R)
     pos_index = 0;
     this->X = X;
     this->R = R;
-    this->is_already_pre_runned = false;
+    this->is_already_initialized = false;
+    this->ar_pos1 = this->ar_pos2 = NULL;
+    this->precalc_powers = NULL;
 }
 
 SimulatedAnnealing::~SimulatedAnnealing()
 {
-    delete[] precalc_powers;
-    precalc_powers = NULL;
+    if (this->ar_pos1 != NULL)
+    {
+        delete[] this->ar_pos1;
+        this->ar_pos1 = NULL;
+    }
+    if (this->ar_pos2 != NULL)
+    {
+        delete[] this->ar_pos2;
+        this->ar_pos2 = NULL;
+    }
+    if (this->precalc_powers != NULL)
+    {
+        delete[] this->precalc_powers;
+        this->precalc_powers = NULL;
+    }
 }
 
-void SimulatedAnnealing::pre_run(SBox &sbox)
+void SimulatedAnnealing::init(SBox &sbox)
 {
-    if (this->is_already_pre_runned)
+    if (this->is_already_initialized)
         return;
-    this->is_already_pre_runned = true;
+    this->is_already_initialized = true;
     this->ar_pos1 = new int[sbox.input_combinations];
     this->ar_pos2 = new int[sbox.input_combinations];
     for (int i=0; i < sbox.input_combinations; ++i)
@@ -120,7 +136,7 @@ void SimulatedAnnealing::restore_generated_neighbor(SBox &sbox)
 
 bool SimulatedAnnealing::run(SBox &sbox, int MIL, int MaxIL, int MUL, double alpha)
 {
-    this->pre_run(sbox);
+    this->init(sbox);
 
     SBox best_solution(sbox);
     SBox temp_F(sbox);
@@ -166,12 +182,16 @@ bool SimulatedAnnealing::run(SBox &sbox, int MIL, int MaxIL, int MUL, double alp
                     std::cout << "NL = " << temp_NL << "; AC = " << temp_AC << "; best NL = " << NL_start << "; best AC = " << AC_start << '\n';
                     loops = 0;
                 }
-                //if ((temp_NL >= 20) && (temp_AC <= 32) && testDES(sbox.F))
+                #ifdef ENABLED_WISHED_BREAK
                 if ((temp_NL >= WISHED_NL) && (temp_AC <= WISHED_AC))
+                    #ifdef DES_CRITERIA_IN_ANNEALING
+                    if (testDES(temp_F.F))
+                    #endif
                 {
                     sbox.set(temp_F);
                     return true;
                 }
+                #endif
                 if ((NL_start < temp_NL) || (NL_start == temp_NL && AC_start > temp_AC))
                 {
                     best_solution.set(temp_F);
@@ -199,6 +219,7 @@ int main()
     srand(time(NULL));
     SBox sbox(CIPHER_N, CIPHER_M, CIPHER_INPUT_LENGTH, CIPHER_OUTPUT_LENGTH);
     SimulatedAnnealing simulated_annealing(8, 3);
+    double current_diff, current_linear, max_diff = 0, max_linear = 0;
     
     /*
     // Random
@@ -212,7 +233,7 @@ int main()
     sbox.print_boolean_f();
     std::cout << "AC = " << sbox.get_AC() << '\n';
     std::cout << "NL = " << sbox.get_NL() << '\n';
-    simulated_annealing.pre_run(sbox);
+    simulated_annealing.init(sbox);
     std::cout << "cost = " << simulated_annealing.get_cost(sbox) << '\n';
     std::cout << "Test DES: " << (testDES(sbox.F) ? "Passed" : "Failed") << '\n';
     //*/
@@ -222,19 +243,31 @@ int main()
         sbox.generate();
         simulated_annealing.run(sbox, 500, 300, 50, 0.95);
         std::cout << "Annealing finished. ";
-        //std::cout << "AC = " << sbox.get_AC() << '\n';
-        //std::cout << "NL = " << sbox.get_NL() << '\n';
+        #ifdef DES_CRITERIA_AFTER_ANNEALING
         if (testDES(sbox.F))
         {
             std::cout << "DES passed\n";
+        #endif
             sbox.print();
             //sbox.print_boolean_f();
-            std::cout << "AC = " << sbox.get_AC() << '\n';
-            std::cout << "NL = " << sbox.get_NL() << '\n';
+            current_diff = sbox.differential_characteristic();
+            if (current_diff > max_diff)
+                max_diff = current_diff;
+            current_linear = sbox.linear_characteristic();
+            if (current_linear > max_linear)
+                max_linear = current_linear;
+            std::cerr << "AC = " << sbox.get_AC() << "; NL = " << sbox.get_NL() << '\n' \
+                << "Diff current/max = " << current_diff << '/' << max_diff \
+                << "; Linear current/max = " << current_linear << '/' << max_linear << '\n';
+        #ifdef DES_CRITERIA_AFTER_ANNEALING
         }
         else
             std::cout << "DES failed\n";
+        #endif
         std::cout << '\n';
+        #ifdef ONE_TIME
+        break;
+        #endif
     }
     //*/
     return 0;

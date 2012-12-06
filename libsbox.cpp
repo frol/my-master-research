@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <memory.h>
 #include "libsbox.h"
+#include "des_criteria.h"
 
 
 void random_shuffle(int array[], int length)
@@ -10,7 +11,16 @@ void random_shuffle(int array[], int length)
 }
 
 
+SBox::SBox()
+{
+}
+
 SBox::SBox(int n, int m, int input_length, int output_length)
+{
+    this->set_params(n, m, input_length, output_length);
+}
+
+void SBox::set_params(int n, int m, int input_length, int output_length)
 {
     this->n = n;
     this->m = m;
@@ -92,7 +102,7 @@ void SBox::generate()
 {
     for (int j = 0; j < m; ++j)
         for (int i = 0; i < n; ++i)
-            F[n * j + i] = i;
+            F[n * j + i] = i % this->output_combinations;
     random_shuffle(F, n * m);
     this->calculate_boolean_f();
 }
@@ -101,7 +111,7 @@ void SBox::print()
 {
     for (int j = 0; j < m; ++j, std::cout << '\n')
         for (int i = 0; i < n; ++i)
-            std::cout << F[n * j + i] << '\t';
+            std::cout << F[n * j + i] << ", ";
 }
 
 void SBox::print_boolean_f()
@@ -165,7 +175,7 @@ void SBox::swap(int pos1, int pos2)
 
 void SBox::calculate_boolean_f()
 {
-    // TODO: Optimize this to store 32 bits instead on 1 bit in one array element.
+    // TODO: Optimize this to store 32 bits instead of 1 bit in one array element.
     // There is a boolean_optimizations branch!
     int** full_boolean_f = new int*[this->output_length];
     for (int i = 0; i < this->output_length; ++i)
@@ -189,4 +199,65 @@ void SBox::calculate_boolean_f()
     for (int i = 0; i < this->output_length; ++i)
         delete[] full_boolean_f[i];
     delete[] full_boolean_f;
+}
+
+double SBox::linear_characteristic()
+{
+    char lat[this->input_combinations][this->output_combinations];
+    char max = 0;
+    char value;
+    memset(lat, char(-(this->input_combinations >> 1)),
+        sizeof(lat[0][0]) * this->input_combinations * this->output_combinations);
+    for (int mx = 0; mx < this->input_combinations; ++mx)
+    {
+        for (int my = 0; my < this->output_combinations; ++my)
+            for (int x = 0; x < this->input_combinations; ++x)
+                if ((__builtin_popcount(x & mx) & 0x1) == (__builtin_popcount(this->F[S_index(x)] & my) & 0x1))
+                    ++lat[mx][my];
+        for (int my = 1; my < this->output_combinations; ++my)
+        {
+            value = lat[mx][my];
+            if (value < 0)
+                value = -value;
+            if (max < value)
+                max = value;
+        }
+    }
+    #ifdef DEBUG
+    std::cout << "Linear:\n";
+    for (int y = 0; y < this->input_combinations; ++y, std::cout << '\n')
+        for (int x = 0; x < this->output_combinations; ++x)
+            std::cout << int(lat[x][y]) << "\t";
+    #endif
+    return double(max) / (this->input_combinations >> 1);
+}
+
+double SBox::differential_characteristic()
+{
+    char diff_table[this->input_combinations][this->output_combinations];
+    char max = 0;
+    char value;
+    memset(diff_table, char(-(this->input_combinations >> 1)),
+        sizeof(diff_table[0][0]) * this->input_combinations * this->output_combinations);
+	for (int deltaX = 0; deltaX < this->input_combinations; ++deltaX)
+	{
+		for (int x = 0; x < this->input_combinations; ++x)
+			++diff_table[deltaX][this->F[S_index(x)] ^ this->F[S_index(x ^ deltaX)]];
+        if (deltaX != 0)
+            for (int y = 0; y < this->output_combinations; ++y)
+            {
+                value = diff_table[deltaX][y];
+                if (value < 0)
+                    value = -value;
+                if (max < value)
+                    max = value;
+            }    
+    }
+    #ifdef DEBUG
+    std::cout << "Diff:\n";
+    for (int y = 0; y < this->input_combinations; ++y, std::cout << '\n')
+        for (int x = 0; x < this->output_combinations; ++x)
+            std::cout << int(diff_table[x][y]) << "\t";
+    #endif
+    return double(max) / (this->input_combinations >> 1);
 }

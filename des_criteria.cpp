@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "des_criteria.h"
 
 const int S_LENGTH = 64;
 /*
@@ -35,9 +36,6 @@ int S[S_LENGTH] = {
 	0,3,5,8,6,0xc,0xb,7,0xa,4,9,0xe,0xf,1,2,0xd,
     // */
 //};
-
-//#define S_index(index) (((((index) & 0x20) >> 4) | ((index) & 1)) * 16 + (((index) >> 1) & 0xf))
-#define S_index(index) (index)
 
 bool s2(int *S)
 {

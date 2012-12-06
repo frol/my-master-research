@@ -17,10 +17,12 @@ public:
     int* F;
     int** boolean_f;
 
+    SBox();
     SBox(int n, int m, int input_length, int output_length);
     SBox(SBox &sbox);
     ~SBox();
 
+    void set_params(int n, int m, int input_length, int output_length);
     void set(SBox &sbox);
     void set(int* F);
     int get_length();
@@ -30,6 +32,9 @@ public:
     int get_NL();
     int get_AC();
     void swap(int pos1, int pos2);
+
+    double linear_characteristic();
+    double differential_characteristic();
 };
 
 #endif
