@@ -256,7 +256,7 @@ int main()
             current_linear = sbox.linear_characteristic();
             if (current_linear > max_linear)
                 max_linear = current_linear;
-            std::cerr << "AC = " << sbox.get_AC() << "; NL = " << sbox.get_NL() << '\n' \
+            std::cout << "AC = " << sbox.get_AC() << "; NL = " << sbox.get_NL() << '\n' \
                 << "Diff current/max = " << current_diff << '/' << max_diff \
                 << "; Linear current/max = " << current_linear << '/' << max_linear << '\n';
         #ifdef DES_CRITERIA_AFTER_ANNEALING
