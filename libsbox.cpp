@@ -288,7 +288,7 @@ void SBox::calculate_boolean_f()
                 }
     }
 //    std::cerr << "calc delete\n";
-    for (int i = 0; i < this->output_length; ++i)
+    for (int i = 0; i < this->output_combinations - 1; ++i)
         delete[] full_boolean_f[i];
     delete[] full_boolean_f;
 }
