@@ -4,6 +4,7 @@
 #include "libsbox.h"
 #include "des_criteria.h"
 
+#define DEBUG
 
 void random_shuffle(int array[], int length)
 {
@@ -34,11 +35,13 @@ void SBox::set_params(int n, int m, int input_length, int output_length)
 
     // There are only (2**output_length - 1) non-trivial boolean functions.
     boolean_f = new int*[this->output_combinations - 1];
-    for (int i = 1; i < this->output_combinations; ++i)
+    for (int i = 0; i < this->output_combinations - 1; ++i)
     {
         // Each boolean function is a vector of (2**input_length) elements.
-        boolean_f[i - 1] = new int[this->input_combinations];
+        boolean_f[i] = new int[this->input_combinations];
     }
+    this->byte_input_combinations = sizeof(boolean_f[0][0]) * this->input_combinations;
+    this->byte_output_combinations = sizeof(boolean_f[0][0]) * this->output_combinations;
 }
 
 SBox::SBox(SBox &sbox)
@@ -62,6 +65,8 @@ SBox::SBox(SBox &sbox)
         boolean_f[i] = new int[this->input_combinations];
         memcpy(boolean_f[i], sbox.boolean_f, this->byte_length);
     }
+    this->byte_input_combinations = sizeof(boolean_f[0][0]) * this->input_combinations;
+    this->byte_output_combinations = sizeof(boolean_f[0][0]) * this->output_combinations;
 }
 
 SBox::~SBox()
@@ -84,7 +89,7 @@ void SBox::set(SBox &sbox)
 {
     memcpy(this->F, sbox.F, this->byte_length);
     for (int i = 0; i < this->output_combinations - 1; ++i)
-        memcpy(this->boolean_f[i], sbox.boolean_f[i], this->byte_length);
+        memcpy(this->boolean_f[i], sbox.boolean_f[i], this->byte_input_combinations);
 }
 
 void SBox::set(int* F)
@@ -177,11 +182,13 @@ void SBox::calculate_boolean_f()
 {
     // TODO: Optimize this to store 32 bits instead of 1 bit in one array element.
     // There is a boolean_optimizations branch!
-    int** full_boolean_f = new int*[this->output_length];
-    for (int i = 0; i < this->output_length; ++i)
+//    std::cerr << "calc info: "<< this->output_length << 'x' << this->length << ' ' << this->output_combinations << ' ' << this->input_combinations << ' ' << this->byte_length << '\n';
+    int** full_boolean_f = new int*[this->output_combinations - 1];
+    for (int i = 0; i < this->output_combinations - 1; ++i)
     {
-        full_boolean_f[i] = new int[this->length];
-        memset(full_boolean_f[i], 0, this->byte_length);
+        full_boolean_f[i] = new int[this->input_combinations];
+//        std::cerr << this->byte_input_combinations;
+        memset(full_boolean_f[i], 0, this->byte_input_combinations);
         for (int j = 0; j < this->length; ++j)
         {
             full_boolean_f[i][j] ^= (F[j] >> i) & 0x1;
@@ -190,12 +197,17 @@ void SBox::calculate_boolean_f()
     // Calculate linear combinations of coordinative (full) boolean functions
     for (int i = 0; i < this->output_combinations - 1; ++i)
     {
-        memset(boolean_f[i], 0, this->byte_length);
+        memset(boolean_f[i], 0, this->byte_input_combinations);
+//    std::cerr << "calc0 " << this->byte_length << ' ' << full_boolean_f[0][0] << '\n';
         for (int j = 0, f_index = i + 1; f_index; ++j, f_index >>= 1)
             if (f_index & 1)
                 for (int k = 0; k < this->input_combinations; ++k)
+                {
+//    std::cerr << "calc1 " << i << ' ' << j << ' ' << k << ' ' << this->output_length << ' ' << this->length << '\n';
                     boolean_f[i][k] ^= full_boolean_f[j][k];
+                }
     }
+//    std::cerr << "calc delete\n";
     for (int i = 0; i < this->output_length; ++i)
         delete[] full_boolean_f[i];
     delete[] full_boolean_f;
@@ -237,7 +249,7 @@ double SBox::differential_characteristic()
     char diff_table[this->input_combinations][this->output_combinations];
     char max = 0;
     char value;
-    memset(diff_table, char(-(this->input_combinations >> 1)),
+    memset(diff_table, 0,
         sizeof(diff_table[0][0]) * this->input_combinations * this->output_combinations);
 	for (int deltaX = 0; deltaX < this->input_combinations; ++deltaX)
 	{
@@ -257,7 +269,7 @@ double SBox::differential_characteristic()
     std::cout << "Diff:\n";
     for (int y = 0; y < this->input_combinations; ++y, std::cout << '\n')
         for (int x = 0; x < this->output_combinations; ++x)
-            std::cout << int(diff_table[x][y]) << "\t";
+            std::cout << int(diff_table[y][x]) << "\t";
     #endif
-    return double(max) / (this->input_combinations >> 1);
+    return double(max);
 }

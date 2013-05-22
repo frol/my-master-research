@@ -4,14 +4,36 @@
 #include "libsbox.h"
 #include "des_criteria.h"
 
+//#define DES 1
+//#define MC_GUFFIN 1
+#define GOST 1
+
+#ifdef DES
 #define CIPHER_N 16
 #define CIPHER_M 4
 #define CIPHER_INPUT_LENGTH 6
-//#define CIPHER_OUTPUT_LENGTH 4
-#define CIPHER_OUTPUT_LENGTH 2
-
+#define CIPHER_OUTPUT_LENGTH 4
 #define WISHED_NL 20
 #define WISHED_AC 32
+#endif
+
+#ifdef MC_GUFFIN
+#define CIPHER_N 16
+#define CIPHER_M 4
+#define CIPHER_INPUT_LENGTH 6
+#define CIPHER_OUTPUT_LENGTH 2
+#define WISHED_NL 20
+#define WISHED_AC 32
+#endif
+
+#ifdef GOST
+#define CIPHER_N 4
+#define CIPHER_M 4
+#define CIPHER_INPUT_LENGTH 4
+#define CIPHER_OUTPUT_LENGTH 4
+#define WISHED_NL 20
+#define WISHED_AC 32
+#endif
 
 
 class SimulatedAnnealing
@@ -179,6 +201,7 @@ bool SimulatedAnnealing::run(SBox &sbox, int MIL, int MaxIL, int MUL, double alp
                 temp_AC = temp_F.get_AC();
                 if (++loops == 1000)
                 {
+                    temp_F.print();
                     std::cout << "NL = " << temp_NL << "; AC = " << temp_AC << "; best NL = " << NL_start << "; best AC = " << AC_start << '\n';
                     loops = 0;
                 }
@@ -240,12 +263,16 @@ int main()
     //*
     while (true)
     {
+    std::cerr << "1";
         sbox.generate();
+    std::cerr << "2";
         simulated_annealing.run(sbox, 500, 300, 50, 0.95);
+    std::cerr << "3";
         std::cout << "Annealing finished. ";
         #ifdef DES_CRITERIA_AFTER_ANNEALING
         if (testDES(sbox.F))
         {
+    std::cerr << "4";
             std::cout << "DES passed\n";
         #endif
             sbox.print();

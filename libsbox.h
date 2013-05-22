@@ -7,6 +7,8 @@ class SBox
 {
     int length;
     int byte_length;
+    int byte_input_combinations;
+    int byte_output_combinations;
     
     void calculate_boolean_f();
 
