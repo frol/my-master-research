@@ -128,6 +128,16 @@ void SBox::print_boolean_f()
             std::cout << boolean_f[i][j] << ' ';
 }
 
+void SBox::print_MD_ML_by_rounds()
+{
+    for (int r = 1; r <= this->cipher_rounds_count; ++r)
+    {
+        double r_MD = this->get_MD(r);
+        double r_ML = this->get_ML(r);
+        std::cout << "Round #" << r << ": MD = 2^" << log2(r_MD) << ", ML = 2^" << log2(r_ML) << '\n';
+    }
+}
+
 /* Nonlinearity
 Note: Useful for DES like S-boxes */
 int SBox::get_NL()
@@ -207,16 +217,18 @@ void SBox::get_MD_args(int& d, int& d_)
         }
 }
 
-double SBox::get_MD()
+double SBox::get_MD(int cipher_round)
 {
     int d, d_;
     this->get_MD_args(d, d_);
+    if (cipher_round == 0)
+        cipher_round = this->cipher_rounds_count;
     return std::max(
         (
-            pow(double(d) / this->output_combinations, this->cipher_rounds_count + 1 - 2 * ceil(this->cipher_rounds_count / 3.0))
-            * pow(double(d_) / this->output_combinations, ceil(this->cipher_rounds_count / 3.0))
+            pow(double(d) / this->output_combinations, cipher_round + 1 - 2 * ceil(cipher_round / 3.0))
+            * pow(double(d_) / this->output_combinations, ceil(cipher_round / 3.0))
         ),
-        pow(double(d) / this->output_combinations, this->cipher_rounds_count - 1)
+        pow(double(d) / this->output_combinations, cipher_round - 1)
     );
 }
 
@@ -241,13 +253,15 @@ void SBox::get_ML_args(int& l)
         }
 }
 
-double SBox::get_ML()
+double SBox::get_ML(int cipher_round)
 {
     int l;
     this->get_ML_args(l);
+    if (cipher_round == 0)
+        cipher_round = this->cipher_rounds_count;
     return pow(
         double(l) / this->output_combinations / this->output_combinations / this->output_combinations,
-        round(2.0 / 3 * this->cipher_rounds_count)
+        round(2.0 / 3 * cipher_round)
     );
 }
 
@@ -262,12 +276,10 @@ void SBox::calculate_boolean_f()
 {
     // TODO: Optimize this to store 32 bits instead of 1 bit in one array element.
     // There is a boolean_optimizations branch!
-//    std::cerr << "calc info: "<< this->output_length << 'x' << this->length << ' ' << this->output_combinations << ' ' << this->input_combinations << ' ' << this->byte_length << '\n';
     int** full_boolean_f = new int*[this->output_combinations - 1];
     for (int i = 0; i < this->output_combinations - 1; ++i)
     {
         full_boolean_f[i] = new int[this->input_combinations];
-//        std::cerr << this->byte_input_combinations;
         memset(full_boolean_f[i], 0, this->byte_input_combinations);
         for (int j = 0; j < this->length; ++j)
         {
@@ -278,16 +290,11 @@ void SBox::calculate_boolean_f()
     for (int i = 0; i < this->output_combinations - 1; ++i)
     {
         memset(boolean_f[i], 0, this->byte_input_combinations);
-//    std::cerr << "calc0 " << this->byte_length << ' ' << full_boolean_f[0][0] << '\n';
         for (int j = 0, f_index = i + 1; f_index; ++j, f_index >>= 1)
             if (f_index & 1)
                 for (int k = 0; k < this->input_combinations; ++k)
-                {
-//    std::cerr << "calc1 " << i << ' ' << j << ' ' << k << ' ' << this->output_length << ' ' << this->length << '\n';
                     boolean_f[i][k] ^= full_boolean_f[j][k];
-                }
     }
-//    std::cerr << "calc delete\n";
     for (int i = 0; i < this->output_combinations - 1; ++i)
         delete[] full_boolean_f[i];
     delete[] full_boolean_f;
@@ -338,11 +345,8 @@ double SBox::differential_characteristic()
         if (deltaX != 0)
             for (int y = 0; y < this->output_combinations; ++y)
             {
-                value = diff_table[deltaX][y];
-                if (value < 0)
-                    value = -value;
-                if (max < value)
-                    max = value;
+                if (diff_table[deltaX][y] > max)
+                    max = diff_table[deltaX][y];
             }    
     }
     #ifdef DEBUG

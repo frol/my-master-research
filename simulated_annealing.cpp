@@ -4,17 +4,19 @@
 #include "libsbox.h"
 #include "des_criteria.h"
 
-//#define DES 1
-//#define MC_GUFFIN 1
-#define GOST 1
+//#define DES
+#define MC_GUFFIN
+//#define GOST
 
 #ifdef DES
 #define CIPHER_N 16
 #define CIPHER_M 4
 #define CIPHER_INPUT_LENGTH 6
 #define CIPHER_OUTPUT_LENGTH 4
-#define WISHED_NL 20
+#define ENABLED_WISHED_BREAK
+#define WISHED_NL 22
 #define WISHED_AC 32
+#define DES_CRITERIA_AFTER_ANNEALING
 #endif
 
 #ifdef MC_GUFFIN
@@ -231,7 +233,6 @@ bool SimulatedAnnealing::run(SBox &sbox, int MIL, int MaxIL, int MUL, double alp
                     #endif
                     0)
                 {
-                    std::cout << temp_MD_d << ' ' << temp_MD_d_ << ' ' << temp_ML_l << '\n';
                     sbox.set(temp_F);
                     return true;
                 }
@@ -276,7 +277,25 @@ int main()
     // DES S2 transposed to direct indexing
     //int F[] = {15, 3, 1, 13, 8, 4, 14, 7, 6, 15, 11, 2, 3, 8, 4, 14, 9, 12, 7, 0, 2, 1, 13, 10, 12, 6, 0, 9, 5, 11, 10, 5, 0, 13, 14, 8, 7, 10, 11, 1, 10, 3, 4, 15, 13, 4, 1, 2, 5, 11, 8, 6, 12, 7, 6, 12, 9, 0, 3, 5, 2, 14, 15, 9};
     // GOST test
-    int F[] = {1, 2, 7, 10, 3, 4, 11, 14, 6, 15, 5, 9, 8, 12, 13, 0};
+    //int F[] = {1, 2, 7, 10, 3, 4, 11, 14, 6, 15, 5, 9, 8, 12, 13, 0};
+    // GOST origin #1
+    //int F[] = {4, 10, 9, 2, 13, 8, 0, 14, 6, 11, 1, 12, 7, 15, 5, 3};
+    // GOST origin #2
+    //int F[] = {14, 11, 4, 12, 6, 13, 15, 10, 2, 3, 8, 1, 0, 7, 5, 9};
+    // GOST origin #3
+    //int F[] = {5, 8, 1, 13, 10, 3, 4, 2, 14, 15, 12, 7, 6, 0, 9, 11};
+    // GOST origin #4
+    //int F[] = {7, 13, 10, 1, 0, 8, 9, 15, 14, 4, 6, 12, 11, 2, 5, 3};
+    // GOST origin #5
+    int F[] = {6, 12, 7, 1, 5, 15, 13, 8, 4, 10, 9, 14, 0, 3, 11, 2};
+    // GOST origin #6
+    //int F[] = {4, 11, 10, 0, 7, 2, 1, 13, 3, 6, 8, 5, 9, 12, 15, 14};
+    // GOST origin #7
+    //int F[] = {13, 11, 4, 1, 3, 15, 5, 9, 0, 10, 14, 7, 6, 8, 2, 12};
+    // GOST origin #8
+    //int F[] = {1, 15, 13, 0, 5, 7, 10, 4, 9, 2, 3, 14, 6, 11, 8, 12};
+    // GOST best by simulated annealing
+    //int F[] = {9, 7, 14, 3, 6, 5, 13, 0, 4, 2, 8, 10, 1, 11, 15, 12};
     sbox.set(F);
     sbox.print();
     sbox.print_boolean_f();
@@ -287,9 +306,14 @@ int main()
     #ifdef GOST
     std::cout << "MD = " << MD << " = 2^" << log2(MD) << '\n';
     std::cout << "ML = " << ML << " = 2^" << log2(ML) << '\n';
+    sbox.print_MD_ML_by_rounds();
     #endif
     simulated_annealing.init(sbox);
     std::cout << "cost = " << simulated_annealing.get_cost(sbox) << '\n';
+    //current_diff = sbox.differential_characteristic();
+    //current_linear = sbox.linear_characteristic();
+    //std::cout << "Diff current = " << current_diff << '\n';
+    //std::cout << "Linear current = " << current_linear << '\n';
     //std::cout << "Test DES: " << (testDES(sbox.F) ? "Passed" : "Failed") << '\n';
     //*/
     //*
@@ -298,12 +322,13 @@ int main()
         sbox.generate();
         simulated_annealing.run(sbox, 500, 300, 50, 0.95);
         std::cout << "Annealing finished. ";
+        sbox.print();
+        std::cout << "NL = " << sbox.get_NL() << "; " << "AC = " << sbox.get_AC() << '\n';
         #ifdef DES_CRITERIA_AFTER_ANNEALING
         if (testDES(sbox.F))
         {
             std::cout << "DES passed\n";
         #endif
-            sbox.print();
             //sbox.print_boolean_f();
             current_diff = sbox.differential_characteristic();
             if (current_diff > max_diff)
@@ -313,8 +338,7 @@ int main()
                 max_linear = current_linear;
             double MD = sbox.get_MD();
             double ML = sbox.get_ML();
-            std::cout << "AC = " << sbox.get_AC() << "; NL = " << sbox.get_NL() \
-                << "\nMD = " << MD << " = 2^" << log2(MD) << "\nML = " << ML << " = 2^" << log2(ML) << '\n' \
+            std::cout << "MD = " << MD << " = 2^" << log2(MD) << "\nML = " << ML << " = 2^" << log2(ML) << '\n' \
                 << "Diff current/max = " << current_diff << '/' << max_diff \
                 << "; Linear current/max = " << current_linear << '/' << max_linear << '\n';
         #ifdef DES_CRITERIA_AFTER_ANNEALING

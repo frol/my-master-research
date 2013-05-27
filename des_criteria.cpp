@@ -40,36 +40,10 @@ int S[S_LENGTH] = {
 bool s2(int *S)
 {
     /*
-    Changing one bit of input of S-box results in changing at least two output bits.
-    */
-    printf("s2 ");
-    int output_delta, bits_count;
-    for (int input = 0; input < S_LENGTH; ++input)
-    {
-        for (int d = 1; d < S_LENGTH; d <<= 1)
-        {
-            output_delta = S[S_index(input)] ^ S[S_index(input ^ d)];
-            bits_count = 0;
-            while(output_delta != 0)
-            {
-                if (output_delta & 1 == 1)
-                    ++bits_count;
-                output_delta >>= 1;
-            }
-            if (bits_count < 2)
-                return false;
-        }
-    }
-    return true;
-}
-
-bool s3(int *S)
-{
-    /*
     The S-boxes were chosen to minimize the difference between the number of
     1's and 0's when any single bit is held constant.
     */
-    printf("s3 ");
+    printf("s2 ");
     int mask, one_bits_count, output;
     for (int bit = 1; bit < S_LENGTH; bit <<= 1)
     {
@@ -98,12 +72,55 @@ bool s3(int *S)
     return true;
 }
 
+bool s3(int *S)
+{
+    /*
+    S(x) != S(x ^ 0abcd0) for any a, b, c, d and abcd != 0000
+    */
+    printf("s3 ");
+    for (int x = 0; x < S_LENGTH; ++x)
+    {
+        for (int abcd = 1; abcd < 16; ++abcd)
+        {
+            if (S[S_index(x)] == S[S_index(x ^ (abcd << 1))])
+                return false;
+        }
+    }
+    return true;
+}
+
 bool s4(int *S)
+{
+    /*
+    Changing one bit of input of S-box results in changing at least two output bits.
+    */
+    printf("s4 ");
+    int output_delta, bits_count;
+    for (int input = 0; input < S_LENGTH; ++input)
+    {
+        for (int d = 1; d < S_LENGTH; d <<= 1)
+        {
+            output_delta = S[S_index(input)] ^ S[S_index(input ^ d)];
+            bits_count = 0;
+            while(output_delta != 0)
+            {
+                if (output_delta & 1 == 1)
+                    ++bits_count;
+                output_delta >>= 1;
+            }
+            if (bits_count < 2)
+                return false;
+        }
+    }
+    return true;
+}
+
+bool s5(int *S)
 {
     /*
     S(x) and S(x ^ 001100) differ at least two bits.
     */
-    printf("s4 ");
+    printf("s5 ");
     int output_delta, bits_count;
     for (int input = 0; input < S_LENGTH; ++input)
     {
@@ -121,12 +138,12 @@ bool s4(int *S)
     return true;
 }
 
-bool s5(int *S)
+bool s6(int *S)
 {
     /*
     S(x) != S(x ^ 11ef00) for any e and f
     */
-    printf("s5 ");
+    printf("s6 ");
     for (int x = 0; x < S_LENGTH; ++x)
     {
         for (int ef = 0; ef < 4; ++ef)
@@ -138,22 +155,6 @@ bool s5(int *S)
     return true;
 }
 
-bool s6(int *S)
-{
-    /*
-    S(x) != S(x ^ 0abcd0) for any a, b, c, d and abcd != 0000
-    */
-    printf("s6 ");
-    for (int x = 0; x < S_LENGTH; ++x)
-    {
-        for (int abcd = 1; abcd < 16; ++abcd)
-        {
-            if (S[S_index(x)] == S[S_index(x ^ (abcd << 1))])
-                return false;
-        }
-    }
-    return true;
-}
 
 /*
 bool s7(int *S)

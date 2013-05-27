@@ -32,12 +32,13 @@ public:
     void generate();
     void print();
     void print_boolean_f();
+    void print_MD_ML_by_rounds();
     int get_NL();
     int get_AC();
     void get_MD_args(int& d, int& d_);
-    double get_MD();
+    double get_MD(int cipher_round=0);
     void get_ML_args(int& l);
-    double get_ML();
+    double get_ML(int cipher_round=0);
     void swap(int pos1, int pos2);
 
     double linear_characteristic();
