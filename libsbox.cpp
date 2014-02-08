@@ -5,7 +5,7 @@
 #include "libsbox.h"
 #include "des_criteria.h"
 
-#define DEBUG
+//#define DEBUG
 
 void random_shuffle(int array[], int length)
 {
@@ -328,7 +328,7 @@ double SBox::linear_characteristic()
         for (int x = 0; x < this->output_combinations; ++x)
             std::cout << int(lat[x][y]) << "\t";
     #endif
-    return double(max) / (this->input_combinations >> 1);
+    return double(max);// / (this->input_combinations >> 1);
 }
 
 double SBox::differential_characteristic()
